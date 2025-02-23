@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter Sentiment Analysis</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #007bff;
+        }
+        #search-form {
+            display: flex;
+            gap: 10px;
+        }
+        #tweet-view, #chart-view {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        #toggle-view {
+            display: none;
+        }
+        .tweet-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .positive { color: #28a745; }
+        .neutral { color: #ffc107; }
+        .negative { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Twitter Sentiment Analysis</h1>
+        
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <form id="search-form" class="w-75">
+                <input type="text" id="keyword" name="keyword" class="form-control" placeholder="Enter keyword..." required>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+            <button id="toggle-view" class="btn btn-secondary">Visualize</button>
+        </div>
+
+        <div id="tweet-view" class="mt-4">
+            <h3>Tweets & Sentiments</h3>
+            <div class="row" id="tweet-list"></div>
+        </div>
+
+        <div id="chart-view" class="mt-4" style="display: none;">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Sentiment Breakdown</h4>
+                    <img id="pie_chart" src="" alt="Sentiment Pie Chart" class="img-fluid">
+                </div>
+                <div class="col-md-6">
+                    <h4>Engagement & Reactions</h4>
+                    <img id="hist_chart" src="" alt="Sentiment Histogram" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("search-form").addEventListener("submit", function(event) {
+            event.preventDefault();  // Prevent default form submission
+
+            let keyword = document.getElementById("keyword").value;
+            let formData = new FormData();
+            formData.append("keyword", keyword);
+
+            fetch("/search", {  
+                method: "POST",  
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("tweet-view").innerHTML = `<p class="text-danger">${data.error}</p>`;
+                    return;
+                }
+
+                let resultsDiv = document.getElementById("tweet-list");
+                resultsDiv.innerHTML = "";
+
+                data.tweets.forEach(([sentiment, tweet]) => {
+                    let sentimentClass = sentiment.toLowerCase();
+                    resultsDiv.innerHTML += `
+                        <div class="col-md-12 tweet-item ${sentimentClass}">
+                            <p><strong>${sentiment}</strong>: ${tweet}</p>
+                        </div>`;
+                });
+
+                document.getElementById("toggle-view").style.display = "block";
+
+                // Fetch and load the charts dynamically
+                fetch("/graphs", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ sentiment_counts: data.sentiment_counts })
+                })
+                .then(response => response.json())
+                .then(graphData => {
+                    if (graphData.pie_chart && graphData.pie_chart.startsWith("data:image/png;base64,")) {
+                        document.getElementById("pie_chart").src = graphData.pie_chart;
+                    } else {
+                        console.error("Pie chart not generated correctly");
+                    }
+
+                    if (graphData.hist_chart && graphData.hist_chart.startsWith("data:image/png;base64,")) {
+                        document.getElementById("hist_chart").src = graphData.hist_chart;
+                    } else {
+                        console.error("Histogram not generated correctly");
+                    }
+                })
+                .catch(error => console.error("Error fetching graphs:", error));
+            })
+            .catch(error => console.error("Error:", error));
+        });
+
+        document.getElementById("toggle-view").addEventListener("click", function() {
+            let tweetView = document.getElementById("tweet-view");
+            let chartView = document.getElementById("chart-view");
+
+            if (tweetView.style.display === "none") {
+                tweetView.style.display = "block";
+                chartView.style.display = "none";
+                this.textContent = "Visualize";
+            } else {
+                tweetView.style.display = "none";
+                chartView.style.display = "block";
+                this.textContent = "Show Tweets";
+            }
+        });
+    </script>
+</body>
+</html>
