@@ -9,7 +9,7 @@ import io
 import base64
 from openai import OpenAI
 from flask_cors import cross_origin
-
+from flask_cors import CORS
 # Set Matplotlib to a non-GUI backend
 matplotlib.use('Agg')
 
@@ -19,6 +19,11 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Flask app setup
 app = Flask(__name__)
+# ✅ Allow CORS for Local & Deployed Frontend
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:5173", 
+    "https://sentiment-analysis-ui.netlify.app"
+]}})
 
 # Headers for Twitter API authentication
 HEADERS = {
@@ -89,12 +94,10 @@ class SentimentAnalyzer:
             return ["Error"] * len(tweets)
 
 @app.route("/")
-@cross_origin(origins="https://sentiment-analysis-ui.netlify.app")
 def home():
     return render_template("index.html")
 
 @app.route("/search", methods=["POST"])
-@cross_origin(origins="https://sentiment-analysis-ui.netlify.app")
 def search():
     keyword = request.form.get("keyword")
     
@@ -173,7 +176,6 @@ def cleanup_old_files():
                 os.remove(file_path)
 
 @app.route("/graphs", methods=["POST"])
-@cross_origin(origins="https://sentiment-analysis-ui.netlify.app")
 def generate_graphs():
     cleanup_old_files()
     data = request.get_json()
