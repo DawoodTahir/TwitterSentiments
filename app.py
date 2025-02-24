@@ -88,10 +88,12 @@ class SentimentAnalyzer:
             return ["Error"] * len(tweets)
 
 @app.route("/")
+@cross_origin(origins="https://sentiment-analysis-ui.netlify.app")
 def home():
     return render_template("index.html")
 
 @app.route("/search", methods=["POST"])
+@cross_origin(origins="https://sentiment-analysis-ui.netlify.app")
 def search():
     keyword = request.form.get("keyword")
     
@@ -170,6 +172,7 @@ def cleanup_old_files():
                 os.remove(file_path)
 
 @app.route("/graphs", methods=["POST"])
+@cross_origin(origins="https://sentiment-analysis-ui.netlify.app")
 def generate_graphs():
     cleanup_old_files()
     data = request.get_json()

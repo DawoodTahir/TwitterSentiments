@@ -24,3 +24,4 @@ typing_extensions==4.12.2
 unicodedata2
 urllib3
 Werkzeug==3.1.3
+flask-cors
