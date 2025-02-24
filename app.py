@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 from openai import OpenAI
+from flask_cors import cross_origin
 
 # Set Matplotlib to a non-GUI backend
 matplotlib.use('Agg')
