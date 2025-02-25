@@ -104,7 +104,7 @@ def search():
     twitter_api = TwitterAPI()
     sentiment_analyzer = SentimentAnalyzer()
     
-    tweets = twitter_api.search_tweets(keyword, 500)
+    tweets = twitter_api.search_tweets(keyword, 1000)
     if not tweets:
         return jsonify({"error": "No tweets found."})
     
@@ -149,16 +149,20 @@ def search():
     #  - 50% weight for normalized sentiment
     #  - 30% weight for engagement
     #  - 20% weight for activity
-    vibe_score = 0.5 * normalized_sentiment + 0.3 * engagement_score + 0.2 * activity_score
+    normalized_sentiment=0.5 * normalized_sentiment
+    engagement_score = 0.3 * engagement_score
+    activity_score = 0.2 * activity_score
+    vibe_score = normalized_sentiment + engagement_score + activity_score
     vibe_score = max(0, min(vibe_score, 100))  # Ensure within 0-100
     return jsonify({
 
         "tweets": list(zip(sentiments, tweet_texts)),
         "sentiment_counts": sentiment_counts,
         "vibe_score" : vibe_score,
-        "engagement_score" : engagement_score
+        "normalized_sentiment" : normalized_sentiment,        
+        "engagement_score" : engagement_score,
+        "activity_score" : activity_score
     })
-
 import datetime
 
 STATIC_FOLDER = "static"
@@ -181,66 +185,13 @@ def generate_graphs():
     data = request.get_json()
     sentiment_counts = data.get("sentiment_counts", {})
     vibe_score=data.get("vibe_score",{})
-    print(sentiment_counts)
-    pie_chart_path = generate_pie_chart(sentiment_counts)
-    hist_chart_path = generate_histogram(sentiment_counts)
-    vibe_chart_path = generate_vibe_chart(vibe_score)
+    
 
     return jsonify({
-        "pie_chart": pie_chart_path,
-        "hist_chart": hist_chart_path,
-        "vibe_chart": vibe_chart_path
+        None
     })
 
-def generate_pie_chart(sentiment_counts):
-    """Generate a pie chart and save it as a file."""
-    labels = list(sentiment_counts.keys())
-    sizes = list(sentiment_counts.values())
 
-    if sum(sizes) == 0:
-        return ""  # Avoid generating an empty chart
-
-    colors = ["#4CAF50", "#FFC107", "#F44336"]
-    plt.figure(figsize=(5, 5))
-    plt.pie(sizes, labels=labels, autopct="%1.1f%%", colors=colors, startangle=140)
-    plt.axis("equal")
-
-    file_path = os.path.join(STATIC_FOLDER, f"pie_chart_{int(time.time())}.png")
-    plt.savefig(file_path, format="png", bbox_inches="tight")
-    plt.close()
-
-    return file_path
-
-def generate_histogram(sentiment_counts):
-    """Generate a histogram and save it as a file."""
-    labels = list(sentiment_counts.keys())
-    values = list(sentiment_counts.values())
-
-    plt.figure(figsize=(6, 5))
-    plt.bar(labels, values, color=["#4CAF50", "#FFC107", "#F44336"])
-    plt.xlabel("Sentiment Type")
-    plt.ylabel("Count")
-    plt.title("Sentiment Distribution")
-
-    file_path = os.path.join(STATIC_FOLDER, f"hist_chart_{int(time.time())}.png")
-    plt.savefig(file_path, format="png")
-    plt.close()
-
-    return file_path
-
-def generate_vibe_chart(vibe_score):
-    """Generate a vibe score bar chart and save it as a file."""
-    plt.figure(figsize=(5, 5))
-    plt.bar(["Vibe Score"], [vibe_score], color="#007bff")
-    plt.ylim(0, 100)
-    plt.ylabel("Score out of 100")
-    plt.title("Vibe Score")
-
-    file_path = os.path.join(STATIC_FOLDER, f"vibe_chart_{int(time.time())}.png")
-    plt.savefig(file_path, format="png")
-    plt.close()
-
-    return file_path
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use PORT from Render, fallback to 5000
