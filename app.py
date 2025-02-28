@@ -7,6 +7,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import io
 import base64
+import re
 from openai import OpenAI
 from flask_cors import cross_origin
 from flask_cors import CORS
@@ -101,6 +102,13 @@ def home():
 def search():
     keyword = request.form.get("keyword")
     
+    
+    # Extract only alphanumeric characters (letters and numbers) from the keyword
+    if keyword:
+        # Use regex to remove all non-alphanumeric characters
+        keyword = re.sub(r"[^a-zA-Z0-9]", "", keyword)
+    else:
+        return jsonify({"error": "Keyword is required."})
     twitter_api = TwitterAPI()
     sentiment_analyzer = SentimentAnalyzer()
     
