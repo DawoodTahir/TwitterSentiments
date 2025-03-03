@@ -1,6 +1,8 @@
 # Vibe Checker
-![Demo GIF](results.gif)
 
+<div align="center">
+  <img src="results.gif" alt="Demo GIF" width="600" />
+</div>
 
 ## Overview
 **Vibe Checker** is a Flask-based web application that analyzes the sentiment of tweets related to a specific keyword or topic. It uses the **Twitter API** to fetch tweets and the **OpenAI API** to perform sentiment analysis. The results are displayed in an easy-to-understand format, including sentiment distribution and engagement metrics.
